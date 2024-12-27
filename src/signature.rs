@@ -8,7 +8,7 @@ use ark_r1cs_std::alloc::{AllocVar, AllocationMode};
 use ark_r1cs_std::boolean::Boolean;
 use ark_r1cs_std::prelude::CurveVar;
 use ark_relations::r1cs::{Namespace, SynthesisError};
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
+use ark_serialize::CanonicalSerialize;
 use ark_std::{rand::Rng, Zero};
 use core::borrow::Borrow;
 use rand_core::CryptoRngCore;

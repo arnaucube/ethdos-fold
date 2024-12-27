@@ -70,12 +70,11 @@ where
             .ok_or(ark_relations::r1cs::SynthesisError::Unsatisfiable)?;
 
         // check that the last signer is signed by the new signer
-        let ei: SigPkVar<C, GC> = external_inputs.into();
         let res = verify::<C, GC>(
             cs.clone(),
             self.config.clone(),
-            ei.pk.clone(),
-            (ei.sig_r, ei.sig_s),
+            external_inputs.pk.clone(),
+            (external_inputs.sig_r, external_inputs.sig_s),
             msg.clone(),
         )?;
         res.enforce_equal(&Boolean::<F>::TRUE)?;
@@ -83,7 +82,7 @@ where
         // increment the degree
         degree = degree.clone() + FpVar::<F>::one();
 
-        let pk_i1_xy = ei.pk.to_constraint_field()?;
+        let pk_i1_xy = external_inputs.pk.to_constraint_field()?;
         Ok(vec![vec![pk_0_x, pk_0_y], pk_i1_xy, vec![degree]].concat())
     }
 }
