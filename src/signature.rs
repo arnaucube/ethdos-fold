@@ -33,10 +33,10 @@ impl<C: CurveGroup> Default for SigPk<C> {
     }
 }
 impl<C: CurveGroup> SigPk<C> {
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(self) -> Vec<u8> {
         let sig_bytes = self.sig.to_bytes();
         let pk_bytes = self.pk.to_bytes();
-        vec![sig_bytes, pk_bytes].concat()
+        [sig_bytes, pk_bytes].concat()
     }
     pub fn from_bytes(b: Vec<u8>) -> Self {
         let u_point_size = C::Affine::generator().serialized_size(ark_serialize::Compress::No);
@@ -138,20 +138,13 @@ where
     let pk = sk.public_key();
 
     // if prev_pk!=None, use it, else, set the new pk to it
-    let prev_pk = if prev_pk.is_some() {
-        prev_pk.unwrap()
-    } else {
-        *pk
-    };
+    let prev_pk = if let Some(v) = prev_pk { v } else { *pk };
 
     let msg = hash_pk(poseidon_config, prev_pk);
 
     let sig = sk
-        .sign::<blake2::Blake2b512>(&poseidon_config, &msg)
+        .sign::<blake2::Blake2b512>(poseidon_config, &msg)
         .unwrap();
-    pk.verify(&poseidon_config, &msg, &sig).unwrap();
-    SigPk {
-        pk: pk.clone(),
-        sig,
-    }
+    pk.verify(poseidon_config, &msg, &sig).unwrap();
+    SigPk { pk: *pk, sig }
 }

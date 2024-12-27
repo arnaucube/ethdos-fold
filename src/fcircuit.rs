@@ -83,7 +83,7 @@ where
         degree = degree.clone() + FpVar::<F>::one();
 
         let pk_i1_xy = external_inputs.pk.to_constraint_field()?;
-        Ok(vec![vec![pk_0_x, pk_0_y], pk_i1_xy, vec![degree]].concat())
+        Ok([vec![pk_0_x, pk_0_y], pk_i1_xy, vec![degree]].concat())
     }
 }
 #[cfg(test)]
