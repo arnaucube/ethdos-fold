@@ -79,6 +79,15 @@ pub fn gen_params() -> Vec<String> {
         elapsed(start)
     ));
 
+    dbg(format!(
+        "prover_params size: {} mb",
+        prover_params_serialized.len() / (1024 * 1024)
+    ));
+    dbg(format!(
+        "verifier_params size: {} mb",
+        verifier_params_serialized.len() / (1024 * 1024)
+    ));
+
     vec![
         b64.encode(&prover_params_serialized),
         b64.encode(&prover_params_serialized),
@@ -98,7 +107,6 @@ pub fn gen_sigs(n_steps: usize) -> Vec<String> {
 #[wasm_bindgen]
 pub fn fold_sigs(params: Vec<String>, sigs_pks: Vec<String>) -> String {
     dbg("starting fold_sigs (rust)".to_string());
-    dbg(format!("received sigs: {:?}", sigs_pks));
 
     let poseidon_config = poseidon_canonical_config::<Fr>();
 
@@ -164,6 +172,10 @@ pub fn fold_sigs(params: Vec<String>, sigs_pks: Vec<String>) -> String {
     ivc_proof
         .serialize_compressed(&mut ivc_proof_bytes)
         .unwrap();
+    dbg(format!(
+        "ivc_proof size: {} mb",
+        ivc_proof_bytes.len() / (1024 * 1024)
+    ));
 
     b64.encode(ivc_proof_bytes)
 }

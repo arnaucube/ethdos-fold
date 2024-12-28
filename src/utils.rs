@@ -48,7 +48,7 @@ pub fn elapsed(start: u64) -> u64 {
 
 #[cfg(target_arch = "wasm32")]
 fn get_wasm_time() -> u64 {
-    use web_sys::{window, Performance};
+    use web_sys::window;
     let window = window().expect("should have a window in this context");
     let performance = window
         .performance()
