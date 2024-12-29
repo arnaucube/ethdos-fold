@@ -48,6 +48,7 @@ where
     fn state_len(&self) -> usize {
         5
     }
+    // This method defines the logic that is done in-circuit at each folding step
     fn generate_step_constraints(
         &self,
         cs: ConstraintSystemRef<F>,
@@ -55,33 +56,38 @@ where
         z_i: Vec<FpVar<F>>,
         external_inputs: Self::ExternalInputsVar,
     ) -> Result<Vec<FpVar<F>>, SynthesisError> {
+        // get the values from the state, where: state = [ pk_0, pk_i, i]
         let pk_0_x = z_i[0].clone();
         let pk_0_y = z_i[1].clone();
         let pk_i_x = z_i[2].clone();
         let pk_i_y = z_i[3].clone();
         let mut degree = z_i[4].clone();
 
-        // get the 'msg' that has been signed, which is the hash of the previous-signer public key
+        // get the 'pk_i_hashed' value, which is the hash of the pk_i, and is the value that has
+        // been signed by the new public key (pk_i+1)
         let mut poseidon = PoseidonSpongeVar::new(cs.clone(), &self.config);
         poseidon.absorb(&vec![pk_i_x, pk_i_y])?;
         let h = poseidon.squeeze_field_elements(1)?;
-        let msg = h
+        let pk_i_hashed = h
             .first()
             .ok_or(ark_relations::r1cs::SynthesisError::Unsatisfiable)?;
 
-        // check that the last signer is signed by the new signer
+        // check that the last signer's public key (pk_i) hashed (=pk_i_hashed) is signed by the
+        // new signer public key (pk_i+1)
         let res = verify::<C, GC>(
             cs.clone(),
             self.config.clone(),
-            external_inputs.pk.clone(),
+            external_inputs.pk.clone(), // pk_{i+1}
             (external_inputs.sig_r, external_inputs.sig_s),
-            msg.clone(),
+            pk_i_hashed.clone(),
         )?;
         res.enforce_equal(&Boolean::<F>::TRUE)?;
 
         // increment the degree
         degree = degree.clone() + FpVar::<F>::one();
 
+        // return the new IVC state, where we place the pk_{i+1} at the place where previously had
+        // the pk_i, together with the new updated degree of distance value
         let pk_i1_xy = external_inputs.pk.to_constraint_field()?;
         Ok([vec![pk_0_x, pk_0_y], pk_i1_xy, vec![degree]].concat())
     }
