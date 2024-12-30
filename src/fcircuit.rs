@@ -1,3 +1,4 @@
+//! This file contains the FCircuit (Sonobe's trait) implementation for the ETHdos logic.
 use ark_crypto_primitives::sponge::{
     constraints::CryptographicSpongeVar,
     poseidon::{constraints::PoseidonSpongeVar, PoseidonConfig},
@@ -92,6 +93,7 @@ where
         Ok([vec![pk_0_x, pk_0_y], pk_i1_xy, vec![degree]].concat())
     }
 }
+
 #[cfg(test)]
 pub mod tests {
     use super::*;

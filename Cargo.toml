@@ -26,9 +26,7 @@ rand_core = {version = "0.6", default-features = false}
 base64 = "0.22.1"
 
 folding-schemes = { git = "https://github.com/privacy-scaling-explorations/sonobe", package = "folding-schemes", features=["light-test"], rev="c6f1a246e0705582a75de6becf4ad21f325fa5a1"}
-# folding-schemes = { path = "../sonobe/sonobe_FCIRCUIT-EXTERNALINPUTS-TO-VEC/folding-schemes", package = "folding-schemes", features=["light-test"]}
 arkeddsa = { git = "https://github.com/arnaucube/arkeddsa", features=["r1cs"], rev="0a9ea7ac1df07363af0fda723e313e775563b9f4"}
-# arkeddsa = { path = "../arkeddsa_TE-to-C", features=["r1cs"]}
 blake2 = "0.10"
 
 

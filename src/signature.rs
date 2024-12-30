@@ -1,3 +1,5 @@
+//! This file is just some helper methods on top of https://github.com/kilic/arkeddsa in order to
+//! use the Signature and PublicKey as ExternalInputs in the FCircuit.
 use ark_crypto_primitives::sponge::{
     poseidon::{PoseidonConfig, PoseidonSponge},
     Absorb, CryptographicSponge,

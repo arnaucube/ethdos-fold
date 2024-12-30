@@ -24,21 +24,50 @@ So for example, in the previous diagram:
 - $pk_3$ is 3 degrees of distance from $pk_0$
   - $pk_3$ has signed $pk_2$, who has signed $pk_1$, who has signed $pk_0$
 - $pk_B$ is 4 degrees of distance from $pk_0$
-  - $pk_B$ has signed $pk_A$, who has signed $pk_2$, who has signed $pk_2$, who has signed $pk_1$
+  - $pk_B$ has signed $pk_A$, who has signed $pk_2$, who has signed $pk_1$, who has signed $pk_0$
 - $pk_\beta$ is 3 degrees of distance from $pk_0$
   - $pk_\beta$ has signed $pk_\alpha$, who has signed $pk_1$, who has signed $pk_0$
 
-With folding schemes, we can map those relations into an IVC model, where at each recursive step we're proving the [`FCircuit` relation](https://github.com/arnaucube/ethdos-fold/blob/main/src/fcircuit.rs) (key part: the method `EthDosCircuit.generate_step_constraints`).
+With folding schemes, we can map those relations into an IVC model, where at each recursive step we're proving the [`FCircuit` relation](https://github.com/arnaucube/ethdos-fold/blob/main/src/fcircuit.rs) (key part: the method `EthDosCircuit.generate_step_constraints`), which ensures that the new state ($s_{i+1}$) comes from the previous state ($s_i$) with the verification of the new signature of the $pk_{i+1}$ over the previous public key $pk_i$.
 
-The *state* of the IVC is $s_i = [pk_0, pk_i, i]$, where $pk_i$ is the public key $i$ degrees of distance from $pk_0$. At each step $i$ we have the IVC proof $\pi_i$, which proves this relation.
+![](img/ethdos-fcircuit.png)
+
+The *state* of the IVC is $s_{i+1} = [pk_0, pk_{i+1}, i+1]$, where $pk_i$ is the public key $i$ degrees of distance from $pk_0$, and $pk_{i+1}$ is $i+1$ degrees of distance from $pk_0$. At each step $i$ we have the IVC proof $\pi_i$, which proves this relation.
+
+The following diagram shows the relation between the states and signatures at each folding step, showing also divergent paths.
 
 ![](img/ethdos-states-diagram.png)
 
 Each new folding step, only needs to have the previous step's state ($s_i = [pk_0, pk_i, i]$) and the respective IVC proof ($\pi_i$), which proves that the given public key $pk_i$ is $i$ degrees of distance from the public key $pk_0$.
-A new recursive step is done from the $\pi_i$ and the $s_i$, and by inputing the new signature $sig_{pk_{i+1}}(pk_i)$, which is at degree of distance $i+1$ from $pk_0$.
+A new recursive step is done from the $\pi_i$ and the $s_i$, and by inputting the new signature $sig_{pk_{i+1}}(pk_i)$, which is at degree of distance $i+1$ from $pk_0$.
 
-Notice that in order to generate the proof of relations between different public keys, it is not necessary to know any of their private keys, but just by knowing their public keys and having their signatures suffices to generate the proofs.
+Notice that in order to generate the proof of relations between different public keys, it is not necessary to know any of their private keys, but just by knowing their public keys and having their signatures suffices to generate the proofs. So for example the signatures could be publicly accessible, and any user could just fetch them to generate their specific proofs of degrees of distance from other keys.
 
+
+## Code structure
+
+As you can see, thanks to the simplicity & modularity of Sonobe and arkworks, this whole implementation reduces to defining the [`FCircuit` trait](https://github.com/arnaucube/ethdos-fold/blob/main/src/fcircuit.rs), which takes less than 70 lines of code, the key part being the method `generate_step_constraints` which takes <40 lines of code.
+
+Additionally, we can swap between folding schemes:
+
+With Sonobe we define the Folding Scheme being used at the line (file `src/lib.rs`):
+```rust
+type FS = Nova<G1, G2, FC, Pedersen<G1>, Pedersen<G2>>;
+```
+which we could switch it to use HyperNova, is as simple as updating the previous line to:
+
+```rust
+type FS = HyperNova< G1, G2, FC, Pedersen<G1>, Pedersen<G2>, 1, 1>;
+```
+
+similarly we can switch to using ProtoGalaxy folding scheme:
+```rust
+type FS = ProtoGalaxy<G1, G2, FC, Pedersen<G1>, Pedersen<G2>>;
+```
+
+And the rest of the code would remain the same, while using a completely different folding scheme.
+
+We can also use any arkworks available cycle of curves at the `G1` and `G2`, the current implementation uses BN254 and Grumpkin curves, since we're verifying EdDSA signatures over the BabyJubJub curve.
 
 
 ## Some numbers
