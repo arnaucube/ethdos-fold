@@ -1,0 +1,20 @@
+name: Test
+on: [push, pull_request]
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo build --release --verbose
+    - name: Tests
+      run: |
+        cargo test --release --verbose
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features
