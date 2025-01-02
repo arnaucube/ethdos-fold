@@ -24,6 +24,7 @@ ark-serialize = { version = "^0.5.0", default-features = false }
 rand = "0.8.5"
 rand_core = {version = "0.6", default-features = false}
 base64 = "0.22.1"
+lz4_flex = { version = "0.11" } # compression
 
 folding-schemes = { git = "https://github.com/privacy-scaling-explorations/sonobe", package = "folding-schemes", features=["light-test"], rev="c6f1a246e0705582a75de6becf4ad21f325fa5a1"}
 arkeddsa = { git = "https://github.com/arnaucube/arkeddsa", features=["r1cs"], rev="0a9ea7ac1df07363af0fda723e313e775563b9f4"}

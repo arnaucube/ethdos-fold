@@ -3,6 +3,7 @@ Follows the ideas of ETHdos (https://ethdos.xyz/blog), but using folding schemes
 It uses <a target="_blank" href="https://github.com/privacy-scaling-explorations/sonobe">Sonobe</a> under the hood, compiled to WASM.
 
 ## Usage
+- requirements: [rust](https://rustup.rs/), [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
 - run native tests: `cargo test --release -- --nocapture`
 - build wasm: `wasm-pack build --target web`
 - serve the web: `python -m http.server 8080`

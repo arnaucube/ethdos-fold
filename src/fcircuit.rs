@@ -115,7 +115,7 @@ pub mod tests {
 
         const N: usize = 1;
         let ext_inps = gen_signatures::<OsRng, EdwardsProjective>(&mut rng, &poseidon_config, 1);
-        let e = ext_inps[0].clone();
+        let e = ext_inps[0];
 
         let msg = hash_pk(&poseidon_config, e.pk);
 
@@ -143,7 +143,7 @@ pub mod tests {
         let circuit = FC::new(poseidon_config).unwrap();
         let xy: (Fr, Fr) = pks_sigs[0].pk.0.xy().unwrap();
         let pk0 = vec![xy.0, xy.1];
-        let z_i: Vec<Fr> = vec![pk0.clone(), pk0, vec![Fr::zero()]].concat();
+        let z_i: Vec<Fr> = [pk0.clone(), pk0, vec![Fr::zero()]].concat();
 
         let external_inputs_var =
             SigPkVar::<EdwardsProjective, EdwardsVar>::new_witness(cs.clone(), || Ok(pks_sigs[0]))

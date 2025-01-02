@@ -171,16 +171,23 @@ pub fn fold_sigs(params: Vec<String>, sigs_pks: Vec<String>) -> String {
     ivc_proof
         .serialize_compressed(&mut ivc_proof_bytes)
         .unwrap();
+
+    let ivc_proof_bytes_comp = lz4_flex::block::compress_prepend_size(&ivc_proof_bytes);
+
     dbg(format!(
-        "ivc_proof size: {} mb",
+        "ivc_proof size (uncompressed): {} mb",
         ivc_proof_bytes.len() / (1024 * 1024)
     ));
+    dbg(format!(
+        "ivc_proof size (compressed): {} mb",
+        ivc_proof_bytes_comp.len() / (1024 * 1024)
+    ));
 
-    b64.encode(ivc_proof_bytes)
+    b64.encode(ivc_proof_bytes_comp)
 }
 
 #[wasm_bindgen]
-pub fn verify_proof(verifier_params: String, ivc_proof: String) -> String {
+pub fn verify_proof(verifier_params: String, ivc_proof_b64: String) -> String {
     let poseidon_config = poseidon_canonical_config::<Fr>();
 
     let vp = FS::vp_deserialize_with_mode(
@@ -190,13 +197,14 @@ pub fn verify_proof(verifier_params: String, ivc_proof: String) -> String {
         poseidon_config.clone(), // fcircuit_params
     )
     .unwrap();
-    // let proof =
-    //     FS::IVCProof::deserialize_compressed(b64.decode(ivc_proof).unwrap().as_slice()).unwrap();
+    let ivc_proof_bytes_comp = b64.decode(ivc_proof_b64).unwrap();
+    let ivc_proof_bytes =
+        lz4_flex::block::decompress_size_prepended(&ivc_proof_bytes_comp).unwrap();
     let proof = <Nova<G1, G2, FC, Pedersen<G1>, Pedersen<G2>, false> as FoldingScheme<
         G1,
         G2,
         FC,
-    >>::IVCProof::deserialize_compressed(b64.decode(ivc_proof).unwrap().as_slice())
+    >>::IVCProof::deserialize_compressed(ivc_proof_bytes.as_slice())
     .unwrap();
 
     FS::verify(
@@ -212,6 +220,7 @@ mod tests {
     use ark_bn254::{Fr, G1Projective as G1};
     use ark_ec::AffineRepr;
     use ark_grumpkin::Projective as G2;
+    use ark_serialize::CanonicalSerialize;
     use ark_std::Zero;
     use rand::rngs::OsRng;
 
@@ -250,7 +259,7 @@ mod tests {
         // set the initial state
         let xy = pks_sigs[0].pk.0.xy().unwrap();
         let pk0 = vec![xy.0, xy.1];
-        let z_0: Vec<Fr> = vec![pk0.clone(), pk0, vec![Fr::zero()]].concat();
+        let z_0: Vec<Fr> = [pk0.clone(), pk0, vec![Fr::zero()]].concat();
 
         type FC = EthDosCircuit<Fr, EdwardsProjective, EdwardsVar>;
         let f_circuit = FC::new(poseidon_config.clone()).unwrap();
@@ -271,9 +280,10 @@ mod tests {
 
         // run n steps of the folding iteration
         let start_full = get_time();
+        #[allow(clippy::needless_range_loop)]
         for i in 0..N_STEPS {
             let start = get_time();
-            nova.prove_step(rng, pks_sigs[i].clone(), None).unwrap();
+            nova.prove_step(rng, pks_sigs[i], None).unwrap();
             dbg(format!("Nova::prove_step {}: {:?}", nova.i, elapsed(start)));
         }
         dbg(format!(
@@ -287,8 +297,23 @@ mod tests {
         dbg!(&ivc_proof.z_i);
         FS::verify(
             nova_params.1.clone(), // Nova's verifier params
-            ivc_proof,
+            ivc_proof.clone(),
         )
         .unwrap();
+
+        // print IVCProof size (uncompressed & compressed)
+        let mut ivc_proof_bytes = vec![];
+        ivc_proof
+            .serialize_compressed(&mut ivc_proof_bytes)
+            .unwrap();
+        let ivc_proof_bytes_comp = lz4_flex::block::compress_prepend_size(&ivc_proof_bytes);
+        dbg(format!(
+            "ivc_proof size (uncompressed): {} mb",
+            ivc_proof_bytes.len() / (1024 * 1024)
+        ));
+        dbg(format!(
+            "ivc_proof size (compressed): {} mb",
+            ivc_proof_bytes_comp.len() / (1024 * 1024)
+        ));
     }
 }
